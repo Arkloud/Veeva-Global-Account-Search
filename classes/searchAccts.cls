@@ -384,7 +384,7 @@ public class searchAccts {
                 if (!resFields.contains('Formatted_Name_vod__c')) {
                     resFields += ',Formatted_Name_vod__c' ;
                 }
-                for (Account a : Database.query('select Id,IsPersonAccount from Account where ' + whereClause + ' order by Name,Id')) {
+                for (Account a : Database.query('select Id,IsPersonAccount from Account where ' + whereClause + ' order by Name,Id LIMIT 50000')) {
                         acctIds.add(a.Id) ;
                 }
             }
@@ -446,7 +446,7 @@ System.debug ('parentSearch is ' + parentSearch) ;
                 return null;
             }
 
-            String q = 'select ' + resFields + ', (select ' + joinStrings(addrResultFields,',') + ' from Address_vod__r order by Primary_vod__c desc, CreatedDate) from Account where Id in :acctIds' ;
+            String q = 'select ' + resFields + ', (select ' + joinStrings(addrResultFields,',') + ' from Address_vod__r order by Primary_vod__c desc, CreatedDate) from Account where Id in :acctIds LIMIT 50000' ;
 
 
             for (Account a : Database.query(q)) {
