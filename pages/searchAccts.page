@@ -1,6 +1,7 @@
 <!-- 
-
-* @version Update 2.2 (9/19/2013) 
+ * @version Update 2.4_BMS - mnaidu - Creating a 2.4 version for BMS which will be incorporated into Base GAS. Updates
+ * 2.4_BMS includes - Progress indicator sandbox, API Name support in custom settings for specifying Summary View instead of translated label
+ * @version Update 2.2 (9/19/2013) 
  * Upate: mnaidu - 9/19/2013 - Added condition to identify at run time which is the field element to be hyperlinked in the results. Coded so as to make this
  * purely a VF page change so that it can be easy to integrate if not a pure GAS 2.2 implementation is used
  *
@@ -10,6 +11,7 @@
  
  -->
 <apex:page id="p1" controller="searchAccts" showHeader="{!parentSearch!='1'}" sidebar="{!parentSearch!='1'}">
+
 
 <style type="text/css">
 #blanket {
@@ -138,10 +140,10 @@ function popup(windowname) {
 <A NAME="TOPX"></A>
 
 <apex:outputPanel id="messagesOP">
-<apex:messages style="color:red"/>
+<apex:messages style="color:green"/>
 </apex:outputPanel>
 <apex:outputText id="errorM" style="color:red"/>
-    <apex:form id="f1">
+<apex:form id="f1">
     <center>
     <apex:outputPanel >
     <br/>
@@ -154,7 +156,16 @@ function popup(windowname) {
         <tr><td>
         <apex:pageBlock id="pb1" title="{!IF(parentSearch=='1',GAS_SFPA,GAS_SFA)}">
             <apex:pageBlockButtons location="top">
-                <apex:commandButton oncomplete="if (document.getElementById('p1:messagesOP').innerHTML == '') {window.location.hash='TOPX';window.location.hash='RESDETAIL'}" action="{!doSearch}" value="{!GAS_SEARCH}" rerender="restableOP,messagesOP" id="theButton"/>
+                    <apex:actionStatus startText=" Processing tquery " stopText=" Done " id="counterStatus" > 
+                      <apex:facet name="start" >Processing... <img src="/apexpages/devmode/img/saveStatus.gif" /> </apex:facet> 
+                      <apex:facet name="stop"> 
+                          <apex:commandButton oncomplete="if (document.getElementById('p1:messagesOP').innerHTML == '') {window.location.hash='TOPX';window.location.hash='RESDETAIL'}" 
+                                    action="{!doSearch}" value="{!GAS_SEARCH}" 
+                                    rerender="restableOP,messagesOP,counterStatus" 
+                                    id="theButton"
+                                    status="counterStatus"/> 
+                      </apex:facet> 
+                    </apex:actionStatus> 
             </apex:pageBlockButtons>
             <apex:pageBlockSection id="pbs11" collapsible="false" title="" columns="5">
 
@@ -165,7 +176,7 @@ function popup(windowname) {
                     <apex:selectRadio style="text-align:left" rendered="{!sfld.has_es}" value="{!sfld.opt_value}">
                         <apex:selectOption rendered="{!sfld.has_es}"  itemValue="Exact Match" itemLabel="{!GAS_EM}"/>
                         <apex:selectOption rendered="{!sfld.has_es}"  itemValue="{!$Setup.GAS_Hierarchical_Setting__c.GAS_Msg_Acct_StrtsWith_Contains_Value__c}" 
-                        												itemLabel="{!$Setup.GAS_Hierarchical_Setting__c.GAS_Msg_Acct_StrtsWith_Contains_Label__c}"/>
+                                                                        itemLabel="{!$Setup.GAS_Hierarchical_Setting__c.GAS_Msg_Acct_StrtsWith_Contains_Label__c}"/>
                     </apex:selectRadio>
                     <apex:selectRadio style="text-align:left" rendered="{!sfld.has_cs}" value="{!sfld.opt_value}">
                         <apex:selectOption rendered="{!sfld.has_cs}"  itemValue="Starts With" itemLabel="{!GAS_SW}"/>
@@ -217,8 +228,19 @@ function popup(windowname) {
 
         <apex:outputPanel id="restableOP">
         <apex:pageBlock id="pb2" title="{!GAS_RESULTS}">
-            <apex:pageBlockButtons >
-                <apex:commandButton rendered="{!parentSearch!='1'}" action="{!addToTerritory}" onclick="return (selAcct != '')" value="{!GAS_ATT}"/>
+            <apex:pageBlockButtons location="top">
+
+                <apex:actionStatus startText=" Processing request " stopText=" Done " id="terrcounterStatus" > 
+                  <apex:facet name="start" >Processing... <img src="/apexpages/devmode/img/saveStatus.gif" /> </apex:facet> 
+                  <apex:facet name="stop"> 
+                      <apex:commandButton rendered="{!parentSearch!='1'}" 
+                      action="{!addToTerritory}" 
+                      value="{!GAS_ATT}"
+                      rerender="restableOP,messagesRES,terrcounterStatus" 
+                      status="terrcounterStatus"/> 
+                  </apex:facet> 
+                </apex:actionStatus> 
+
                 <apex:commandButton rendered="{!parentSearch=='1'}" onclick="selectParentAcct()" value="{!GAS_SELECT}"/>
             </apex:pageBlockButtons>
                 <table cellspacing="5" cellpadding="5" id="restable">
@@ -247,9 +269,9 @@ function popup(windowname) {
                     <apex:repeat value="{!item.srFields}" var="rfld">
                         <td>
                         
-                        	<apex:outputLink rendered="{!AND($Setup.GAS_Hierarchical_Setting__c.Enable_Summary_View__c, rfld.label == $Setup.GAS_Hierarchical_Setting__c.Summary_View_Hyperlink_Field_Name__c)}" 
-                        						value="/apex/VPROF_GASAccountDetails?id={!item.acctId}" target="_blank">{!rfld.value}</apex:outputLink>
-                        	<apex:outputText rendered="{!NOT(AND($Setup.GAS_Hierarchical_Setting__c.Enable_Summary_View__c, rfld.label == $Setup.GAS_Hierarchical_Setting__c.Summary_View_Hyperlink_Field_Name__c))}" value="{!rfld.value}"/>
+                            <apex:outputLink rendered="{!AND($Setup.GAS_Hierarchical_Setting__c.Enable_Summary_View__c, rfld.apiname == $Setup.GAS_Hierarchical_Setting__c.Summary_View_Hyperlink_Field_Name__c)}" 
+                                                value="/apex/VPROF_GASAccountDetails?id={!item.acctId}" target="_blank">{!rfld.value}</apex:outputLink>
+                            <apex:outputText rendered="{!NOT(AND($Setup.GAS_Hierarchical_Setting__c.Enable_Summary_View__c, rfld.apiname == $Setup.GAS_Hierarchical_Setting__c.Summary_View_Hyperlink_Field_Name__c))}" value="{!rfld.value}"/>
                         </td>
                     </apex:repeat>
                 </tr>
